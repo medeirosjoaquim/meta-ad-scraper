@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>META ADS LIBRARY</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0a;
+      --bg-secondary: #151515;
+      --bg-tertiary: #1a1a1a;
+      --text: #f5f5f5;
+      --text-muted: #888;
+      --accent: #ff6b35;
+      --accent-hover: #ff8555;
+      --border: #2a2a2a;
+      --border-light: #333;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --yellow: #eab308;
+    }
+
+    body {
+      font-family: 'Lato', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    header {
+      border-bottom: 2px solid var(--accent);
+      padding: 2rem;
+      background: var(--bg-secondary);
+    }
+
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      text-transform: uppercase;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Search Section */
+    .search-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .search-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+      gap: 1rem;
+      align-items: end;
+    }
+
+    @media (max-width: 1000px) {
+      .search-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .search-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      font-weight: 700;
+    }
+
+    input[type="text"], input[type="number"], select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.875rem 1rem;
+      font-family: 'Lato', sans-serif;
+      font-size: 0.9375rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input:focus, select:focus { border-color: var(--accent); }
+    input::placeholder { color: #555; }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] { -moz-appearance: textfield; }
+
+    button {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      padding: 0.875rem 2rem;
+      font-family: 'Lato', sans-serif;
+      font-size: 0.9375rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: all 0.2s;
+      height: fit-content;
+    }
+
+    button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Scraper engine toggle */
+    .engine-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .engine-toggle {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .engine-btn {
+      padding: 0.4rem 1rem;
+      font-size: 0.7rem;
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+      border: none;
+      cursor: pointer;
+      font-family: 'Lato', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: all 0.15s;
+    }
+
+    .engine-btn + .engine-btn { border-left: 1px solid var(--border); }
+
+    .engine-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .engine-hint {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Download All toggle */
+    .download-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1.25rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .download-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { display: none; }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: all 0.2s;
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: var(--text-muted);
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .toggle-switch input:checked ~ .toggle-track {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .toggle-switch input:checked ~ .toggle-thumb {
+      left: 23px;
+      background: var(--bg);
+    }
+
+    .download-label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .download-desc {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    .download-info {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .download-info svg { flex-shrink: 0; }
+
+    /* Progress Section */
+    .progress-section {
+      display: none;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+      overflow: hidden;
+    }
+
+    .progress-section.active { display: block; }
+
+    .progress-header {
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .progress-phase {
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .phase-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .progress-count {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.9375rem;
+    }
+
+    .progress-body { padding: 1.25rem 1.5rem; }
+
+    .progress-bar-container {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      height: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+      height: 100%;
+      width: 0%;
+      transition: width 0.4s ease;
+    }
+
+    .progress-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+      text-shadow: 0 0 6px rgba(0,0,0,0.9);
+    }
+
+    .progress-stats {
+      display: flex;
+      gap: 1.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .stat-value {
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .progress-logs {
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      background: var(--bg);
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      margin-top: 1rem;
+    }
+
+    .progress-logs p { margin: 0.1rem 0; }
+
+    .progress-logs-toggle {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-top: 0.75rem;
+      background: none;
+      border: none;
+      padding: 0;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+      font-family: 'Lato', sans-serif;
+    }
+
+    .progress-logs-toggle:hover { color: var(--accent); transform: none; }
+
+    /* Results */
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .results-count {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .results-count strong {
+      color: var(--accent);
+      font-size: 1.5rem;
+    }
+
+    .results-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .action-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.75rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+
+    .action-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .action-btn.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* Download complete banner */
+    .download-banner {
+      display: none;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      border: 1px solid var(--blue);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .download-banner.active { display: flex; }
+
+    .download-banner-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .download-banner-title {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+    }
+
+    .download-banner-stats {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .download-banner-stats span {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .download-banner-stats .val {
+      color: var(--blue);
+      font-weight: 700;
+    }
+
+    /* Ad Cards */
+    .ads-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .ad-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      overflow: hidden;
+    }
+
+    .ad-header {
+      background: var(--bg-tertiary);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .ad-page {
+      font-weight: 700;
+      font-size: 1.125rem;
+    }
+
+    .ad-page a {
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .ad-page a:hover { color: var(--accent); }
+
+    .ad-badges {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .badge {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.5rem;
+      font-weight: 700;
+    }
+
+    .badge-active { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .badge-inactive { background: rgba(136,136,136,0.15); color: var(--text-muted); border: 1px solid rgba(136,136,136,0.3); }
+    .badge-id { background: var(--bg); color: var(--text-muted); font-family: monospace; border: 1px solid var(--border); }
+    .badge-age { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+
+    .ad-body {
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 800px) {
+      .ad-body { grid-template-columns: 1fr; }
+    }
+
+    .ad-content h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .ad-text {
+      font-size: 0.9375rem;
+      line-height: 1.7;
+      color: var(--text);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .ad-text-truncated {
+      max-height: 150px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .ad-text-truncated::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 40px;
+      background: linear-gradient(transparent, var(--bg-secondary));
+    }
+
+    .ad-text-toggle {
+      font-size: 0.75rem;
+      color: var(--accent);
+      cursor: pointer;
+      margin-top: 0.25rem;
+      background: none;
+      border: none;
+      padding: 0;
+      text-transform: none;
+      letter-spacing: 0;
+      font-weight: 400;
+    }
+
+    .ad-text-toggle:hover { text-decoration: underline; transform: none; }
+
+    .ad-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .meta-item {
+      background: var(--bg);
+      padding: 0.875rem;
+      border: 1px solid var(--border);
+    }
+
+    .meta-label {
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+    }
+
+    .meta-value {
+      font-weight: 700;
+      color: var(--accent);
+      font-size: 0.9375rem;
+      word-break: break-word;
+    }
+
+    .meta-value a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .meta-value a:hover { text-decoration: underline; }
+
+    .ad-media { padding: 0 1.5rem 1.5rem; }
+
+    .ad-media h3 {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+
+    .media-grid {
+      display: flex;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .media-thumb {
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .media-thumb:hover { border-color: var(--accent); }
+
+    .ad-footer {
+      background: var(--bg-tertiary);
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .ad-footer a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8125rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ad-footer a:hover { text-decoration: underline; }
+
+    /* JSON View */
+    .json-view {
+      display: none;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      overflow-x: auto;
+    }
+
+    .json-view.active { display: block; }
+
+    pre {
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      color: var(--text);
+    }
+
+    .json-key { color: var(--accent); }
+    .json-string { color: #a5d6a7; }
+    .json-number { color: #81d4fa; }
+    .json-boolean { color: #ce93d8; }
+    .json-null { color: #ef9a9a; }
+
+    /* States */
+    .loading {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-muted);
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--accent);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 1rem;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error {
+      background: var(--bg-secondary);
+      border: 1px solid var(--red);
+      border-left: 4px solid var(--red);
+      padding: 1.5rem;
+      color: var(--red);
+    }
+
+    .error-title {
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 4rem;
+      color: var(--text-muted);
+      border: 1px dashed var(--border);
+    }
+
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+    }
+
+    /* Image modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 1000;
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active { display: flex; }
+
+    .modal-overlay img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+    }
+
+    #cancelBtn:hover { border-color: var(--red); color: var(--red); }
+    #cancelBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-content">
+      <h1>META ADS <span>LIBRARY</span></h1>
+      <p class="subtitle">Search and scrape ads from the Meta Ad Library</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="search-section">
+      <div class="engine-row">
+        <div class="engine-toggle">
+          <button type="button" class="engine-btn active" onclick="setScrapeMode('graphql')">GraphQL (Fast)</button>
+          <button type="button" class="engine-btn" onclick="setScrapeMode('playwright')">Playwright (Browser)</button>
+        </div>
+        <span class="engine-hint" id="scrapeModeHint">Direct HTTP requests &mdash; no browser needed</span>
+      </div>
+
+      <form id="scraperForm" class="search-grid">
+        <input type="hidden" id="scrapeMode" value="graphql">
+        <div class="form-group">
+          <label for="scrapeQuery">Search Terms</label>
+          <input type="text" id="scrapeQuery" placeholder="glp-1, weight loss, crypto..." required>
+        </div>
+        <div class="form-group">
+          <label for="scrapeCountry">Country</label>
+          <select id="scrapeCountry">
+            <option value="US">United States</option>
+            <option value="BR">Brazil</option>
+            <option value="GB">United Kingdom</option>
+            <option value="CA">Canada</option>
+            <option value="AU">Australia</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="IT">Italy</option>
+            <option value="ES">Spain</option>
+            <option value="IN">India</option>
+            <option value="MX">Mexico</option>
+            <option value="JP">Japan</option>
+            <option value="AR">Argentina</option>
+            <option value="ALL">All Countries</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="scrapeSortBy">Sort By</label>
+          <select id="scrapeSortBy">
+            <option value="impressions">Most Impressions</option>
+            <option value="newest">Newest First</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="scrapeStatus">Status</label>
+          <select id="scrapeStatus">
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+            <option value="all">All</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="scrapeMax">Max Ads</label>
+          <input type="number" id="scrapeMax" value="50" min="1" max="1000" step="1">
+        </div>
+        <button type="submit" id="scrapeBtn">Scrape &amp; Download</button>
+      </form>
+
+      <div class="download-row">
+        <div class="download-toggle-wrap">
+          <label class="toggle-switch" for="downloadAllToggle">
+            <input type="checkbox" id="downloadAllToggle" checked onchange="onDownloadToggle()">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <div>
+            <div class="download-label">Download All Media</div>
+            <div class="download-desc">Save each ad with images, videos &amp; text to organized folders</div>
+          </div>
+        </div>
+        <div class="download-info" id="downloadInfo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Saved to <strong style="color:var(--text);">downloads/</strong> &mdash; organized by advertiser, each ad with images, videos &amp; text</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress -->
+    <div class="progress-section" id="progressSection">
+      <div class="progress-header">
+        <div class="progress-phase">
+          <div class="phase-dot"></div>
+          <span id="progressPhaseLabel">Scraping ads...</span>
+          <span id="progressPhaseDetail" style="font-weight:400;font-size:0.7rem;color:var(--text-muted);text-transform:none;letter-spacing:0;"></span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <div class="progress-count" id="progressCount">0 / 0</div>
+          <span id="progressElapsed" style="font-size:0.75rem;color:var(--text-muted);font-family:monospace;"></span>
+          <button id="cancelBtn" onclick="cancelScrape()" style="padding:0.4rem 0.75rem;font-size:0.7rem;background:transparent;border:1px solid var(--border);color:var(--text-muted);">Cancel</button>
+        </div>
+      </div>
+      <div class="progress-body">
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="progressBar"></div>
+          <div class="progress-text" id="progressPercent">0%</div>
+        </div>
+        <div class="progress-stats" id="progressStats">
+          <div class="stat-item">Ads: <span class="stat-value" id="statAds">0</span></div>
+        </div>
+        <button class="progress-logs-toggle" onclick="toggleLogs()">Show logs</button>
+        <div class="progress-logs" id="progressLogs" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div id="resultsContainer"></div>
+  </main>
+
+  <footer>
+    <p>Data scraped from Meta Ad Library</p>
+  </footer>
+
+  <!-- Image modal -->
+  <div class="modal-overlay" id="imageModal" onclick="this.classList.remove('active')">
+    <img id="modalImage" src="" alt="">
+  </div>
+
+  <script>
+    let currentResults = null;
+    let currentJobId = null;
+    let pollInterval = null;
+    let logsVisible = false;
+    let pollFailures = 0;
+    let currentPhase = null;
+
+    // ─── Scraper Engine Toggle ────────────────────
+    function setScrapeMode(mode) {
+      document.getElementById('scrapeMode').value = mode;
+      document.querySelectorAll('.engine-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', (i === 0 && mode === 'graphql') || (i === 1 && mode === 'playwright'));
+      });
+      document.getElementById('scrapeModeHint').textContent = mode === 'graphql'
+        ? 'Direct HTTP requests \u2014 no browser needed'
+        : 'Full browser automation \u2014 slower but more reliable';
+    }
+
+    // ─── Download Toggle ──────────────────────────
+    function onDownloadToggle() {
+      const on = document.getElementById('downloadAllToggle').checked;
+      document.getElementById('downloadInfo').style.display = on ? 'flex' : 'none';
+      document.getElementById('scrapeBtn').textContent = on ? 'Scrape & Download' : 'Scrape';
+    }
+
+    // ─── Scraper Form ─────────────────────────────
+    document.getElementById('scraperForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const query = document.getElementById('scrapeQuery').value.trim();
+      if (!query) return;
+
+      const btn = document.getElementById('scrapeBtn');
+      btn.disabled = true;
+
+      const container = document.getElementById('resultsContainer');
+      container.innerHTML = '';
+
+      const downloadAll = document.getElementById('downloadAllToggle').checked;
+      const maxAds = parseInt(document.getElementById('scrapeMax').value) || 50;
+
+      try {
+        const res = await fetch('/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query,
+            country: document.getElementById('scrapeCountry').value,
+            sortBy: document.getElementById('scrapeSortBy').value,
+            activeStatus: document.getElementById('scrapeStatus').value,
+            maxAds,
+            mode: document.getElementById('scrapeMode').value,
+            downloadAll,
+          }),
+        });
+
+        const data = await res.json();
+        if (data.error) {
+          container.innerHTML = `<div class="error"><div class="error-title">Error</div>${escapeHtml(data.error)}</div>`;
+          btn.disabled = false;
+          btn.textContent = downloadAll ? 'Scrape & Download' : 'Scrape';
+          return;
+        }
+
+        currentJobId = data.jobId;
+        showProgress(true);
+        btn.textContent = 'Running...';
+
+        pollInterval = setInterval(() => pollStatus(currentJobId), 1500);
+      } catch (err) {
+        container.innerHTML = `<div class="error"><div class="error-title">Error</div>${escapeHtml(err.message)}</div>`;
+        btn.disabled = false;
+        btn.textContent = downloadAll ? 'Scrape & Download' : 'Scrape';
+      }
+    });
+
+    function showProgress(show) {
+      const section = document.getElementById('progressSection');
+      section.classList.toggle('active', show);
+      if (!show) return;
+      document.getElementById('progressLogs').innerHTML = '';
+      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('progressPercent').textContent = '0%';
+      document.getElementById('progressCount').textContent = '0 / 0';
+      document.getElementById('progressPhaseLabel').textContent = 'Scraping ads...';
+      document.getElementById('progressPhaseDetail').textContent = '';
+      document.getElementById('progressElapsed').textContent = '';
+      document.getElementById('progressStats').innerHTML = '<div class="stat-item">Ads: <span class="stat-value" id="statAds">0</span></div>';
+      pollFailures = 0;
+      currentPhase = null;
+      const dot = document.querySelector('.phase-dot');
+      dot.style.background = '';
+      dot.style.animation = '';
+      logsVisible = false;
+      document.getElementById('progressLogs').style.display = 'none';
+      const cancelBtn = document.getElementById('cancelBtn');
+      cancelBtn.disabled = false;
+      cancelBtn.textContent = 'Cancel';
+    }
+
+    async function cancelScrape() {
+      if (!currentJobId) return;
+      const cancelBtn = document.getElementById('cancelBtn');
+      cancelBtn.disabled = true;
+      cancelBtn.textContent = 'Cancelling...';
+      try {
+        await fetch(`/scrape/cancel/${currentJobId}`, { method: 'POST' });
+      } catch (err) {
+        console.error('Cancel error:', err);
+      }
+    }
+
+    function toggleLogs() {
+      logsVisible = !logsVisible;
+      document.getElementById('progressLogs').style.display = logsVisible ? 'block' : 'none';
+      document.querySelector('.progress-logs-toggle').textContent = logsVisible ? 'Hide logs' : 'Show logs';
+    }
+
+    async function pollStatus(jobId) {
+      try {
+        const res = await fetch(`/scrape/status/${jobId}`);
+        const data = await res.json();
+
+        if (pollFailures > 0) {
+          pollFailures = 0;
+          const dot = document.querySelector('.phase-dot');
+          dot.style.background = '';
+          dot.style.animation = '';
+        }
+
+        const isDownloading = data.phase === 'downloading' || data.status === 'downloading';
+
+        // Detect rate limiting from logs
+        const isRateLimited = data.logs.some(l => l.includes('Rate limit') || l.includes('rate limit'));
+
+        if (isDownloading) {
+          document.getElementById('progressPhaseLabel').textContent = 'Downloading media...';
+        } else if (isRateLimited && data.status === 'running') {
+          document.getElementById('progressPhaseLabel').textContent = 'Rate limited — waiting...';
+          // Auto-show logs so user can see what's happening
+          if (!logsVisible) {
+            logsVisible = true;
+            document.getElementById('progressLogs').style.display = 'block';
+            document.querySelector('.progress-logs-toggle').textContent = 'Hide logs';
+          }
+        } else if (data.status === 'running') {
+          document.getElementById('progressPhaseLabel').textContent = 'Scraping ads...';
+        }
+
+        document.getElementById('progressPhaseDetail').textContent = data.phaseDetail || '';
+
+        if (data.startedAt) {
+          const elapsed = Date.now() - new Date(data.startedAt).getTime();
+          document.getElementById('progressElapsed').textContent = formatElapsed(elapsed);
+        }
+
+        if (currentPhase && currentPhase !== data.phase) {
+          document.getElementById('progressBar').style.transition = 'none';
+          document.getElementById('progressBar').style.width = '0%';
+          document.getElementById('progressPercent').textContent = '0%';
+          requestAnimationFrame(() => {
+            document.getElementById('progressBar').style.transition = 'width 0.4s ease';
+          });
+        }
+        currentPhase = data.phase;
+
+        if (isDownloading && data.downloadProgress) {
+          const dp = data.downloadProgress;
+          const pct = dp.total > 0 ? Math.round((dp.current / dp.total) * 100) : 0;
+          document.getElementById('progressBar').style.width = pct + '%';
+          document.getElementById('progressPercent').textContent = pct + '%';
+          document.getElementById('progressCount').textContent = `${dp.current} / ${dp.total}`;
+          document.getElementById('progressStats').innerHTML = `
+            <div class="stat-item">Ads saved: <span class="stat-value">${dp.current} / ${dp.total}</span></div>
+            <div class="stat-item">Media files: <span class="stat-value">${dp.mediaFiles}</span></div>
+            <div class="stat-item">Size: <span class="stat-value">${formatBytes(dp.bytes)}</span></div>
+          `;
+        } else {
+          const pct = data.progress.max > 0
+            ? Math.round((data.progress.current / data.progress.max) * 100)
+            : 0;
+          document.getElementById('progressBar').style.width = pct + '%';
+          document.getElementById('progressPercent').textContent = pct + '%';
+          document.getElementById('progressCount').textContent = `${data.progress.current} / ${data.progress.max}`;
+          document.getElementById('progressStats').innerHTML = `
+            <div class="stat-item">Ads found: <span class="stat-value">${data.progress.current}</span></div>
+          `;
+        }
+
+        const logsEl = document.getElementById('progressLogs');
+        logsEl.innerHTML = data.logs.map(l => `<p>${escapeHtml(l)}</p>`).join('');
+        logsEl.scrollTop = logsEl.scrollHeight;
+
+        if (data.status === 'completed') {
+          clearInterval(pollInterval);
+          document.getElementById('progressSection').classList.remove('active');
+          const btn = document.getElementById('scrapeBtn');
+          btn.disabled = false;
+          const downloadAll = document.getElementById('downloadAllToggle').checked;
+          btn.textContent = downloadAll ? 'Scrape & Download' : 'Scrape';
+
+          const resData = await fetch(`/scrape/results/${jobId}`);
+          const results = await resData.json();
+          currentResults = results;
+          renderResults(results, jobId, data.downloadAll, data.downloadStats);
+        } else if (data.status === 'error') {
+          clearInterval(pollInterval);
+          document.getElementById('progressSection').classList.remove('active');
+          const btn = document.getElementById('scrapeBtn');
+          btn.disabled = false;
+          const downloadAll = document.getElementById('downloadAllToggle').checked;
+          btn.textContent = downloadAll ? 'Scrape & Download' : 'Scrape';
+          const isRateErr = (data.error || '').includes('rate limit') || (data.error || '').includes('Rate limit');
+          document.getElementById('resultsContainer').innerHTML = `
+            <div class="error">
+              <div class="error-title">${isRateErr ? 'Rate Limited' : 'Scraper Error'}</div>
+              ${escapeHtml(data.error || 'Unknown error')}
+              ${isRateErr ? '<br><br>Facebook is temporarily blocking requests from this IP. Wait a few minutes and try again.' : ''}
+            </div>`;
+        } else if (data.status === 'cancelled') {
+          clearInterval(pollInterval);
+          document.getElementById('progressSection').classList.remove('active');
+          const btn = document.getElementById('scrapeBtn');
+          btn.disabled = false;
+          const downloadAll = document.getElementById('downloadAllToggle').checked;
+          btn.textContent = downloadAll ? 'Scrape & Download' : 'Scrape';
+          const adsFound = data.progress?.current || 0;
+          document.getElementById('resultsContainer').innerHTML = `
+            <div class="error" style="border-color:var(--yellow);color:var(--yellow);">
+              <div class="error-title">Scrape Cancelled</div>
+              Scrape was cancelled by user.${adsFound > 0 ? ' Found ' + adsFound + ' ads before cancellation.' : ''}
+            </div>`;
+        }
+      } catch (err) {
+        pollFailures++;
+        console.error('Poll error:', err);
+        const dot = document.querySelector('.phase-dot');
+        const phaseLabel = document.getElementById('progressPhaseLabel');
+        const phaseDetail = document.getElementById('progressPhaseDetail');
+
+        if (pollFailures >= 10) {
+          clearInterval(pollInterval);
+          dot.style.background = 'var(--red)';
+          dot.style.animation = 'none';
+          phaseLabel.textContent = 'Connection lost';
+          phaseDetail.textContent = '';
+          const btn = document.getElementById('scrapeBtn');
+          btn.disabled = false;
+          const downloadAll = document.getElementById('downloadAllToggle').checked;
+          btn.textContent = downloadAll ? 'Scrape & Download' : 'Scrape';
+        } else if (pollFailures >= 3) {
+          dot.style.background = 'var(--yellow)';
+          dot.style.animation = 'none';
+          phaseLabel.textContent = 'Connection error';
+          phaseDetail.textContent = 'Retrying...';
+        }
+      }
+    }
+
+    function renderResults(results, jobId, downloadAll, downloadStats) {
+      const ads = results.data || [];
+      const container = document.getElementById('resultsContainer');
+
+      if (ads.length === 0) {
+        container.innerHTML = `<div class="empty"><p>No ads found for "${results.meta?.query}"</p></div>`;
+        return;
+      }
+
+      let bannerHtml = '';
+      if (downloadAll && downloadStats) {
+        bannerHtml = `
+          <div class="download-banner active">
+            <div class="download-banner-info">
+              <div class="download-banner-title">Download Complete</div>
+              <div class="download-banner-stats">
+                <span><span class="val">${downloadStats.totalAds}</span> ads</span>
+                <span><span class="val">${downloadStats.advertisers || '?'}</span> advertisers</span>
+                <span><span class="val">${downloadStats.totalMedia}</span> media files</span>
+                <span><span class="val">${formatBytes(downloadStats.totalBytes)}</span> total</span>
+              </div>
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);text-align:right;">
+              <div style="color:var(--blue);font-weight:700;">Saved to downloads/ folder</div>
+              <div style="margin-top:0.2rem;">Organized by advertiser with all media &amp; text</div>
+            </div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        ${bannerHtml}
+        <div class="results-header">
+          <div class="results-count">
+            Found <strong>${ads.length}</strong> ads for "${escapeHtml(results.meta?.query || '')}"
+          </div>
+          <div class="results-actions">
+            <button class="action-btn active" onclick="toggleView('cards')">Cards</button>
+            <button class="action-btn" onclick="toggleView('json')">JSON</button>
+            <button class="action-btn" onclick="downloadResults('${jobId}', 'json')">JSON File</button>
+            <button class="action-btn" onclick="downloadResults('${jobId}', 'csv')">CSV File</button>
+          </div>
+        </div>
+        <div class="ads-grid" id="cardsView">
+          ${ads.map(ad => renderAdCard(ad)).join('')}
+        </div>
+        <div class="json-view" id="jsonView">
+          <pre>${syntaxHighlight(JSON.stringify(results, null, 2))}</pre>
+        </div>
+      `;
+    }
+
+    function renderAdCard(ad) {
+      const status = (ad.status || '').toLowerCase() === 'active' ? 'active' : 'inactive';
+      const name = ad.advertiserName || 'Unknown';
+      const body = ad.adBody || '';
+      const title = ad.gqlTitle || '';
+      const date = ad.startDate || 'N/A';
+      const ctaUrl = ad.ctaUrl || '';
+      const ctaText = ad.ctaText || '';
+      const adUrl = `https://www.facebook.com/ads/library/?id=${ad.libraryId}`;
+      const truncated = body.length > 300;
+
+      let mediaHtml = '';
+      const images = ad.images || [];
+      if (images.length > 0) {
+        mediaHtml = `
+          <div class="ad-media">
+            <h3>Media</h3>
+            <div class="media-grid">
+              ${images.map(img => `<img class="media-thumb" src="${escapeHtml(img.src)}" alt="${escapeHtml(img.alt || '')}" onclick="showImage('${escapeHtml(img.src)}')" onerror="this.style.display='none'">`).join('')}
+            </div>
+          </div>`;
+      }
+
+      const coAdv = ad.coAdvertiser
+        ? `<span style="color:var(--text-muted);font-size:0.8rem;"> with <a href="${escapeHtml(ad.coAdvertiser.url)}" target="_blank" style="color:var(--accent);text-decoration:none;">${escapeHtml(ad.coAdvertiser.name)}</a></span>`
+        : '';
+
+      return `
+        <article class="ad-card">
+          <div class="ad-header">
+            <div class="ad-page">
+              ${ad.advertiserUrl ? `<a href="${escapeHtml(ad.advertiserUrl)}" target="_blank">${escapeHtml(name)}</a>` : escapeHtml(name)}
+              ${coAdv}
+            </div>
+            <div class="ad-badges">
+              <span class="badge badge-${status}">${status}</span>
+              ${ad.isAgeGated ? '<span class="badge badge-age">Age-Gated</span>' : ''}
+              <span class="badge badge-id">${ad.libraryId}</span>
+            </div>
+          </div>
+          <div class="ad-body">
+            <div class="ad-content">
+              ${title ? `<h3>Title</h3><p class="ad-text" style="color:var(--accent);margin-bottom:1rem;">${escapeHtml(title)}</p>` : ''}
+              ${body ? `
+                <h3>Ad Copy</h3>
+                <div class="ad-text ${truncated ? 'ad-text-truncated' : ''}" id="adtext-${ad.libraryId}">${escapeHtml(body)}</div>
+                ${truncated ? `<button class="ad-text-toggle" onclick="toggleAdText('${ad.libraryId}')">Show more</button>` : ''}
+              ` : '<h3>Ad Copy</h3><p class="ad-text" style="color:var(--text-muted);">Content requires login to view</p>'}
+            </div>
+            <div class="ad-meta">
+              <div class="meta-item">
+                <div class="meta-label">Started</div>
+                <div class="meta-value" style="font-size:0.875rem;">${escapeHtml(date)}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Versions</div>
+                <div class="meta-value" style="font-size:0.875rem;">${ad.creativeCount || 1}${ad.hasMultipleVersions ? ' (multi)' : ''}</div>
+              </div>
+              ${ctaText ? `
+                <div class="meta-item">
+                  <div class="meta-label">CTA</div>
+                  <div class="meta-value" style="font-size:0.875rem;">${escapeHtml(ctaText)}</div>
+                </div>
+              ` : ''}
+              ${ctaUrl ? `
+                <div class="meta-item">
+                  <div class="meta-label">Landing Page</div>
+                  <div class="meta-value" style="font-size:0.75rem;"><a href="${escapeHtml(ctaUrl)}" target="_blank">${truncateUrl(ctaUrl)}</a></div>
+                </div>
+              ` : ''}
+            </div>
+          </div>
+          ${mediaHtml}
+          <div class="ad-footer">
+            <span style="font-size:0.75rem;color:var(--text-muted);">${ad.creativeCount > 1 ? ad.creativeCount + ' ads use this creative' : ''}</span>
+            <a href="${adUrl}" target="_blank">View in Ad Library &rarr;</a>
+          </div>
+        </article>
+      `;
+    }
+
+    // ─── Utilities ────────────────────────────────
+    function toggleView(view) {
+      document.querySelectorAll('.action-btn').forEach(btn => {
+        if (btn.textContent.toLowerCase() === view) btn.classList.add('active');
+        else if (['cards', 'json'].includes(btn.textContent.toLowerCase())) btn.classList.remove('active');
+      });
+      const cards = document.getElementById('cardsView');
+      const json = document.getElementById('jsonView');
+      if (cards) cards.style.display = view === 'cards' ? 'grid' : 'none';
+      if (json) json.classList.toggle('active', view === 'json');
+    }
+
+    function toggleAdText(id) {
+      const el = document.getElementById('adtext-' + id);
+      if (!el) return;
+      const btn = el.nextElementSibling;
+      if (el.classList.contains('ad-text-truncated')) {
+        el.classList.remove('ad-text-truncated');
+        if (btn) btn.textContent = 'Show less';
+      } else {
+        el.classList.add('ad-text-truncated');
+        if (btn) btn.textContent = 'Show more';
+      }
+    }
+
+    function downloadResults(jobId, format) {
+      window.open(`/scrape/download/${jobId}/${format}`, '_blank');
+    }
+
+    function showImage(src) {
+      document.getElementById('modalImage').src = src;
+      document.getElementById('imageModal').classList.add('active');
+    }
+
+    function truncateUrl(url) {
+      try {
+        const u = new URL(url);
+        const display = u.hostname + u.pathname;
+        return display.length > 50 ? display.substring(0, 47) + '...' : display;
+      } catch {
+        return url.substring(0, 50);
+      }
+    }
+
+    function formatElapsed(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+    }
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+    }
+
+    function syntaxHighlight(json) {
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'json-key';
+            match = match.slice(0, -1) + '</span>:';
+            return `<span class="${cls}">${match}`;
+          }
+          cls = 'json-string';
+        } else if (/true|false/.test(match)) {
+          cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return `<span class="${cls}">${match}</span>`;
+      });
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = String(text);
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
