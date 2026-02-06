@@ -6,6 +6,9 @@ node_modules/
 .env.local
 .env.*.local
 
+# Facebook session cookies (sensitive)
+cookies.json
+
 # Output and debug directories
 output/
 debug/
@@ -51,3 +54,4 @@ Thumbs.db
 # Coverage reports
 coverage/
 .nyc_output/
+downloads

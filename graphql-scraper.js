@@ -6,6 +6,20 @@ const { buildSearchUrl, convertToCSV, COUNTRY_CODES } = require("./scraper");
 const USER_AGENT =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
 
+const COOKIES_PATH = path.join(__dirname, "cookies.json");
+
+function loadCookies() {
+  try {
+    if (fs.existsSync(COOKIES_PATH)) {
+      const cookies = JSON.parse(fs.readFileSync(COOKIES_PATH, "utf-8"));
+      if (Array.isArray(cookies) && cookies.length > 0) {
+        return cookies;
+      }
+    }
+  } catch {}
+  return null;
+}
+
 function randomDelay(min = 500, max = 1500) {
   return new Promise((resolve) =>
     setTimeout(resolve, min + Math.random() * (max - min))
@@ -481,6 +495,15 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
       timezoneId: "America/New_York",
     });
 
+    // Load saved Facebook cookies for authenticated access
+    const cookies = loadCookies();
+    if (cookies) {
+      await context.addCookies(cookies);
+      log("Loaded Facebook session cookies (authenticated mode)");
+    } else {
+      log("No cookies.json found — running unauthenticated (age-gated ads will have no media)");
+    }
+
     const page = await context.newPage();
 
     // Queue for new GraphQL responses (used to detect when new data arrives)
@@ -853,8 +876,15 @@ async function downloadAdMedia(ads, outputDir, log) {
   fs.mkdirSync(mediaDir, { recursive: true });
 
   let downloaded = 0;
+  let skipped = 0;
   for (const ad of ads) {
     const adDir = path.join(mediaDir, ad.libraryId);
+
+    // Skip if already downloaded
+    if (fs.existsSync(adDir) && fs.readdirSync(adDir).length > 0) {
+      skipped++;
+      continue;
+    }
 
     const imageUrls = (ad.images || []).map((img) => img.src).filter(Boolean);
     if (imageUrls.length > 0) {
@@ -895,7 +925,7 @@ async function downloadAdMedia(ads, outputDir, log) {
     }
   }
 
-  log(`Downloaded ${downloaded} media files to ${mediaDir}`);
+  log(`Downloaded ${downloaded} media files to ${mediaDir}${skipped > 0 ? ` (${skipped} ads skipped, already downloaded)` : ""}`);
 }
 
 function sanitizeFolderName(name) {
@@ -910,6 +940,12 @@ function sanitizeFolderName(name) {
 async function saveAdToFolder(ad, baseDir) {
   const folderName = ad.libraryId;
   const adDir = path.join(baseDir, folderName);
+
+  // Skip if already downloaded
+  if (fs.existsSync(path.join(adDir, "ad.json"))) {
+    return { mediaFiles: 0, bytes: 0, skipped: true };
+  }
+
   fs.mkdirSync(adDir, { recursive: true });
 
   let mediaFiles = 0;
@@ -1000,6 +1036,7 @@ async function saveAllAds(ads, outputDir, onProgress) {
   }
 
   let processed = 0;
+  let skipped = 0;
   for (const [advName, advAds] of Object.entries(byAdvertiser)) {
     const advDir = path.join(adsDir, advName);
     fs.mkdirSync(advDir, { recursive: true });
@@ -1007,8 +1044,12 @@ async function saveAllAds(ads, outputDir, onProgress) {
     for (const ad of advAds) {
       try {
         const stats = await saveAdToFolder(ad, advDir);
-        totalMedia += stats.mediaFiles;
-        totalBytes += stats.bytes;
+        if (stats.skipped) {
+          skipped++;
+        } else {
+          totalMedia += stats.mediaFiles;
+          totalBytes += stats.bytes;
+        }
       } catch {}
 
       processed++;
@@ -1019,6 +1060,7 @@ async function saveAllAds(ads, outputDir, onProgress) {
           total: ads.length,
           mediaFiles: totalMedia,
           bytes: totalBytes,
+          skipped,
         });
       }
     }
@@ -1038,6 +1080,7 @@ async function saveAllAds(ads, outputDir, onProgress) {
     totalAds: ads.length,
     totalMedia,
     totalBytes,
+    skipped,
     advertisers: Object.keys(byAdvertiser).length,
   };
 }

@@ -139,6 +139,7 @@ app.post("/scrape", async (req, res) => {
             total: event.total,
             mediaFiles: event.mediaFiles,
             bytes: event.bytes,
+            skipped: event.skipped || 0,
           };
         }
       });
