@@ -878,6 +878,17 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Saved to <strong style="color:var(--text);">downloads/</strong> &mdash; organized by advertiser, each ad with images, videos &amp; text</span>
         </div>
+        <div class="download-toggle-wrap" id="startFreshWrap" style="margin-left:1rem;">
+          <label class="toggle-switch" for="startFreshToggle">
+            <input type="checkbox" id="startFreshToggle">
+            <div class="toggle-track"></div>
+            <div class="toggle-thumb"></div>
+          </label>
+          <div>
+            <div class="download-label">Start Fresh</div>
+            <div class="download-desc">Ignore previous results and re-scrape from scratch</div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -943,7 +954,9 @@
     function onDownloadToggle() {
       const on = document.getElementById('downloadAllToggle').checked;
       document.getElementById('downloadInfo').style.display = on ? 'flex' : 'none';
+      document.getElementById('startFreshWrap').style.display = on ? 'flex' : 'none';
       document.getElementById('scrapeBtn').textContent = on ? 'Scrape & Download' : 'Scrape';
+      if (!on) document.getElementById('startFreshToggle').checked = false;
     }
 
     // ─── Scraper Form ─────────────────────────────
@@ -960,6 +973,7 @@
       container.innerHTML = '';
 
       const downloadAll = document.getElementById('downloadAllToggle').checked;
+      const startFresh = document.getElementById('startFreshToggle').checked;
       const maxAds = parseInt(document.getElementById('scrapeMax').value) || 50;
 
       try {
@@ -974,6 +988,7 @@
             maxAds,
             mode: document.getElementById('scrapeMode').value,
             downloadAll,
+            startFresh,
           }),
         });
 
@@ -988,6 +1003,14 @@
         currentJobId = data.jobId;
         showProgress(true);
         btn.textContent = 'Running...';
+
+        // Show resume info if resuming
+        if (data.resumeInfo && data.resumeInfo.previousAds > 0) {
+          const resumeMsg = `Resuming: ${data.resumeInfo.previousAds} previously scraped ads will be skipped`;
+          document.getElementById('progressPhaseDetail').textContent = resumeMsg;
+          const logsEl = document.getElementById('progressLogs');
+          logsEl.innerHTML = `<p>${escapeHtml(resumeMsg)}</p>`;
+        }
 
         pollInterval = setInterval(() => pollStatus(currentJobId), 1500);
       } catch (err) {
@@ -1058,6 +1081,8 @@
 
         if (isDownloading) {
           document.getElementById('progressPhaseLabel').textContent = 'Downloading media...';
+        } else if (data.resumeInfo && data.resumeInfo.previousAds > 0 && data.status === 'running' && !isRateLimited) {
+          document.getElementById('progressPhaseLabel').textContent = 'Resuming scrape...';
         } else if (isRateLimited && data.status === 'running') {
           document.getElementById('progressPhaseLabel').textContent = 'Rate limited — waiting...';
           // Auto-show logs so user can see what's happening
@@ -1125,7 +1150,7 @@
           const resData = await fetch(`/scrape/results/${jobId}`);
           const results = await resData.json();
           currentResults = results;
-          renderResults(results, jobId, data.downloadAll, data.downloadStats);
+          renderResults(results, jobId, data.downloadAll, data.downloadStats, data.resumeInfo);
         } else if (data.status === 'error') {
           clearInterval(pollInterval);
           document.getElementById('progressSection').classList.remove('active');
@@ -1180,7 +1205,7 @@
       }
     }
 
-    function renderResults(results, jobId, downloadAll, downloadStats) {
+    function renderResults(results, jobId, downloadAll, downloadStats, resumeInfo) {
       const ads = results.data || [];
       const container = document.getElementById('resultsContainer');
 
@@ -1191,12 +1216,18 @@
 
       let bannerHtml = '';
       if (downloadAll && downloadStats) {
+        const isResume = resumeInfo && resumeInfo.previousAds > 0;
+        const resumeStatsHtml = isResume
+          ? `<span>New ads: <span class="val">${resumeInfo.newAds || downloadStats.newAds || ads.length}</span></span>
+             <span>Total in folder: <span class="val">${downloadStats.totalAds}</span></span>`
+          : `<span><span class="val">${downloadStats.totalAds}</span> ads</span>`;
+
         bannerHtml = `
           <div class="download-banner active">
             <div class="download-banner-info">
-              <div class="download-banner-title">Download Complete</div>
+              <div class="download-banner-title">${isResume ? 'Resume Complete' : 'Download Complete'}</div>
               <div class="download-banner-stats">
-                <span><span class="val">${downloadStats.totalAds}</span> ads</span>
+                ${resumeStatsHtml}
                 <span><span class="val">${downloadStats.advertisers || '?'}</span> advertisers</span>
                 <span><span class="val">${downloadStats.totalMedia}</span> media files</span>
                 <span><span class="val">${formatBytes(downloadStats.totalBytes)}</span> total</span>

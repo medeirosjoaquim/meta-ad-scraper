@@ -25,6 +25,30 @@ app.get("/scrape/countries", (req, res) => {
   res.json(COUNTRY_CODES);
 });
 
+function getQueryFingerprint(query, country, activeStatus, sortBy) {
+  const safeQuery = (query || "").replace(/[^a-zA-Z0-9\-_ ]/g, "").replace(/\s+/g, "_").substring(0, 40).toLowerCase();
+  return `${safeQuery}_${country}_${activeStatus}_${sortBy}`;
+}
+
+function loadState(fingerprint) {
+  const statePath = path.join(process.cwd(), "downloads", ".state", `${fingerprint}.json`);
+  try {
+    if (fs.existsSync(statePath)) {
+      return JSON.parse(fs.readFileSync(statePath, "utf-8"));
+    }
+  } catch {}
+  return null;
+}
+
+function saveState(fingerprint, state) {
+  const stateDir = path.join(process.cwd(), "downloads", ".state");
+  fs.mkdirSync(stateDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(stateDir, `${fingerprint}.json`),
+    JSON.stringify(state, null, 2)
+  );
+}
+
 app.post("/scrape", async (req, res) => {
   const {
     query,
@@ -36,6 +60,7 @@ app.post("/scrape", async (req, res) => {
     maxAds = 50,
     downloadMedia = false,
     downloadAll = false,
+    startFresh = false,
     mode = "graphql",
   } = req.body;
 
@@ -59,11 +84,23 @@ app.post("/scrape", async (req, res) => {
 
   // Use downloads/ for bulk download, output/ for regular scrapes
   let outputDir;
+  let previousState = null;
+  let previouslySeenIds = [];
+  const fingerprint = getQueryFingerprint(query, country, activeStatus, sortBy);
+
   if (downloadAll) {
-    const safeQuery = query.replace(/[^a-zA-Z0-9\-_ ]/g, "").replace(/\s+/g, "_").substring(0, 40);
-    const dateStr = new Date().toISOString().slice(0, 10);
-    const folderName = `${safeQuery}_${dateStr}_${jobId}`;
-    outputDir = path.join(process.cwd(), "downloads", folderName);
+    previousState = startFresh ? null : loadState(fingerprint);
+
+    if (previousState && previousState.downloadDir) {
+      // Resume: reuse existing download folder
+      outputDir = previousState.downloadDir;
+      previouslySeenIds = previousState.seenIds || [];
+    } else {
+      // Fresh start: stable folder name without date/jobId
+      const safeQuery = query.replace(/[^a-zA-Z0-9\-_ ]/g, "").replace(/\s+/g, "_").substring(0, 40);
+      const folderName = `${safeQuery}_${country}_${activeStatus}`;
+      outputDir = path.join(process.cwd(), "downloads", folderName);
+    }
   } else {
     outputDir = path.join(process.cwd(), "output", jobId);
   }
@@ -85,13 +122,14 @@ app.post("/scrape", async (req, res) => {
     error: null,
     startedAt: new Date().toISOString(),
     abortController: new AbortController(),
+    resumeInfo: previouslySeenIds.length > 0 ? { previousAds: previouslySeenIds.length, newAds: 0 } : null,
   };
   scrapeJobs.set(jobId, job);
 
   // Return job ID immediately so client can poll
-  res.json({ jobId, status: "started", mode, downloadAll });
+  res.json({ jobId, status: "started", mode, downloadAll, resumeInfo: job.resumeInfo });
 
-  const scraperParams = { query, country, activeStatus, adType, mediaType, sortBy, maxAds: clampedMax, downloadMedia, outputDir };
+  const scraperParams = { query, country, activeStatus, adType, mediaType, sortBy, maxAds: clampedMax, downloadMedia, outputDir, previouslySeenIds };
   const onEvent = (event) => {
     if (event.type === "log") {
       job.logs.push(event.message);
@@ -116,14 +154,27 @@ app.post("/scrape", async (req, res) => {
     const result = await scraperFn(scraperParams, onEvent, { signal: job.abortController.signal });
     job.result = result;
 
+    // Merge results.json with existing if present (resume mode)
+    const resultsPath = path.join(outputDir, "results.json");
+    let mergedResult = result;
+    try {
+      if (downloadAll && fs.existsSync(resultsPath)) {
+        const existing = JSON.parse(fs.readFileSync(resultsPath, "utf-8"));
+        if (existing.data && Array.isArray(existing.data)) {
+          const adsById = new Map();
+          for (const ad of existing.data) adsById.set(ad.libraryId, ad);
+          for (const ad of result.data) adsById.set(ad.libraryId, ad);
+          mergedResult = { ...result, data: [...adsById.values()] };
+          mergedResult.meta.totalResults = mergedResult.data.length;
+        }
+      }
+    } catch {}
+
     // Save results to disk
-    fs.writeFileSync(
-      path.join(outputDir, "results.json"),
-      JSON.stringify(result, null, 2)
-    );
+    fs.writeFileSync(resultsPath, JSON.stringify(mergedResult, null, 2));
     fs.writeFileSync(
       path.join(outputDir, "results.csv"),
-      convertToCSV(result.data)
+      convertToCSV(mergedResult.data)
     );
 
     // If downloadAll, save organized folders with media
@@ -145,8 +196,31 @@ app.post("/scrape", async (req, res) => {
       });
 
       job.downloadStats = stats;
-      job.logs.push(`Download complete: ${stats.totalAds} ads from ${stats.advertisers} advertisers, ${stats.totalMedia} media files, ${formatBytes(stats.totalBytes)}`);
+      if (job.resumeInfo) {
+        job.resumeInfo.newAds = result.data.length;
+      }
+      job.logs.push(`Download complete: ${stats.totalAds} total ads from ${stats.advertisers} advertisers, ${stats.totalMedia} media files, ${formatBytes(stats.totalBytes)}`);
+      if (job.resumeInfo) {
+        job.logs.push(`Resume: ${result.data.length} new ads this run, ${stats.totalAds} total in folder`);
+      }
       job.logs.push(`Saved to: ${outputDir}`);
+
+      // Save state for resume (only on successful completion with downloadAll)
+      const newSeenIds = [...new Set([...previouslySeenIds, ...result.data.map(ad => ad.libraryId)])];
+      const stateData = {
+        seenIds: newSeenIds,
+        totalAdsCollected: newSeenIds.length,
+        downloadDir: outputDir,
+        runs: [
+          ...((previousState && previousState.runs) || []),
+          {
+            jobId,
+            adsFound: result.data.length,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      };
+      saveState(fingerprint, stateData);
     }
 
     job.status = "completed";
@@ -158,6 +232,7 @@ app.post("/scrape", async (req, res) => {
       job.error = "Scrape cancelled by user";
       job.completedAt = new Date().toISOString();
       console.log(`[scrape:${mode}] Cancelled by user`);
+      // Don't update state file on cancellation
     } else {
       job.status = "error";
       job.error = err.message;
@@ -194,6 +269,7 @@ app.get("/scrape/status/:jobId", (req, res) => {
     progress: job.progress,
     downloadProgress: job.downloadProgress,
     downloadStats: job.downloadStats,
+    resumeInfo: job.resumeInfo,
     logs: job.logs,
     error: job.error,
     startedAt: job.startedAt,

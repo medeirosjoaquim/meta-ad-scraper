@@ -437,6 +437,7 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
     maxAds = 50,
     downloadMedia = false,
     outputDir = path.join(process.cwd(), "output"),
+    previouslySeenIds = [],
   } = params;
 
   function checkAborted() {
@@ -458,7 +459,12 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
 
   // All collected ads
   const allAds = [];
-  const seenIds = new Set();
+  const seenIds = new Set(previouslySeenIds);
+  const isResuming = previouslySeenIds.length > 0;
+
+  if (isResuming) {
+    log(`Resume mode: ${previouslySeenIds.length} previously scraped ads will be skipped`);
+  }
 
   function addAdsFromEdges(edges) {
     let newCount = 0;
@@ -725,12 +731,14 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
     }
 
     // Pagination loop: scroll to load more ads
-    let emptyScrolls = 0;
+    let emptyScrolls = 0; // scrolls with zero GraphQL edges at all (truly exhausted)
+    let noNewAdsScrolls = 0; // scrolls with edges, but all already in seenIds
     const maxEmptyScrolls = 5;
+    const maxNoNewAdsScrolls = isResuming ? 15 : 5;
     let scrollCount = 0;
     let consecutiveRateLimits = 0;
 
-    while (allAds.length < maxAds && emptyScrolls < maxEmptyScrolls) {
+    while (allAds.length < maxAds && emptyScrolls < maxEmptyScrolls && noNewAdsScrolls < maxNoNewAdsScrolls) {
       checkAborted();
       scrollCount++;
       const prevCount = allAds.length;
@@ -788,8 +796,10 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
       // Small extra wait for response processing
       await page.waitForTimeout(500);
 
-      // Process new responses
+      // Process new responses — track whether any edges arrived at all
+      let scrollHadEdges = false;
       for (const resp of pendingResponses) {
+        if (resp.edges.length > 0) scrollHadEdges = true;
         addAdsFromEdges(resp.edges);
       }
       pendingResponses = [];
@@ -798,6 +808,12 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
       if (newAds > 0) {
         log(`Scroll ${scrollCount}: +${newAds} ads (total: ${allAds.length}/${maxAds})`);
         emptyScrolls = 0;
+        noNewAdsScrolls = 0;
+      } else if (scrollHadEdges) {
+        // Got edges but all were previously seen — only relevant in resume mode
+        noNewAdsScrolls++;
+        emptyScrolls = 0;
+        log(`Scroll ${scrollCount}: all ads already seen (${noNewAdsScrolls}/${maxNoNewAdsScrolls} skipped scrolls)`);
       } else {
         emptyScrolls++;
         log(`Scroll ${scrollCount}: no new ads (${emptyScrolls} empty scrolls, stops after ${maxEmptyScrolls})`);
@@ -866,6 +882,7 @@ async function scrapeAdsGraphQL(params, onProgress, { signal } = {}) {
       scrapedAt: new Date().toISOString(),
       url,
       mode: "graphql",
+      resumedFrom: previouslySeenIds.length || null,
     },
     data: results,
   };
@@ -1066,22 +1083,46 @@ async function saveAllAds(ads, outputDir, onProgress) {
     }
   }
 
+  // Merge with existing summary if present (resume mode)
+  let mergedAds = ads;
+  const summaryPath = path.join(adsDir, "_summary.json");
+  try {
+    if (fs.existsSync(summaryPath)) {
+      const existing = JSON.parse(fs.readFileSync(summaryPath, "utf-8"));
+      if (existing.ads && Array.isArray(existing.ads)) {
+        const adsById = new Map();
+        for (const ad of existing.ads) adsById.set(ad.libraryId, ad);
+        for (const ad of ads) adsById.set(ad.libraryId, ad); // new ads overwrite
+        mergedAds = [...adsById.values()];
+      }
+    }
+  } catch {}
+
+  // Recount advertisers from merged set
+  const mergedByAdvertiser = {};
+  for (const ad of mergedAds) {
+    const advName = sanitizeFolderName(ad.advertiserName || "unknown");
+    if (!mergedByAdvertiser[advName]) mergedByAdvertiser[advName] = [];
+    mergedByAdvertiser[advName].push(ad);
+  }
+
   const summaryJson = JSON.stringify({
-    totalAds: ads.length,
+    totalAds: mergedAds.length,
     totalMedia,
     totalBytes,
-    advertisers: Object.keys(byAdvertiser).length,
-    ads,
+    advertisers: Object.keys(mergedByAdvertiser).length,
+    ads: mergedAds,
   }, null, 2);
-  fs.writeFileSync(path.join(adsDir, "_summary.json"), summaryJson);
-  fs.writeFileSync(path.join(adsDir, "_summary.csv"), convertToCSV(ads));
+  fs.writeFileSync(summaryPath, summaryJson);
+  fs.writeFileSync(path.join(adsDir, "_summary.csv"), convertToCSV(mergedAds));
 
   return {
-    totalAds: ads.length,
+    totalAds: mergedAds.length,
     totalMedia,
     totalBytes,
     skipped,
-    advertisers: Object.keys(byAdvertiser).length,
+    advertisers: Object.keys(mergedByAdvertiser).length,
+    newAds: ads.length,
   };
 }
 
